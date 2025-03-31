@@ -6,6 +6,7 @@ import com.carrental.car_rental_service.service.CarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class CarController {
 
     private CarService carService;
 
+    @PreAuthorize("hasRole('ADMIN)")
     @PostMapping
     public ResponseEntity<CarResponse> addCar(@RequestBody CarRequest carRequest){
         return new ResponseEntity<>(carService.addCar(carRequest), HttpStatus.CREATED);
@@ -27,6 +29,7 @@ public class CarController {
         return ResponseEntity.ok(carService.getAllCars());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CarResponse> updateCar(
             @PathVariable Long id,
@@ -35,6 +38,7 @@ public class CarController {
         return ResponseEntity.ok(carService.updateCar(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id){
         carService.deleteCar(id);
