@@ -13,4 +13,5 @@ public class BookingRequest {
     private Long carId;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String couponCode;
 }

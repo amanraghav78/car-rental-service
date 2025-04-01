@@ -2,12 +2,10 @@ package com.carrental.car_rental_service.service;
 
 import com.carrental.car_rental_service.dto.BookingRequest;
 import com.carrental.car_rental_service.dto.BookingResponse;
-import com.carrental.car_rental_service.entity.Booking;
-import com.carrental.car_rental_service.entity.Car;
-import com.carrental.car_rental_service.entity.PaymentStatus;
-import com.carrental.car_rental_service.entity.User;
+import com.carrental.car_rental_service.entity.*;
 import com.carrental.car_rental_service.repository.BookingRepository;
 import com.carrental.car_rental_service.repository.CarRepository;
+import com.carrental.car_rental_service.repository.CouponRepository;
 import com.carrental.car_rental_service.repository.UserRepository;
 import io.netty.channel.local.LocalAddress;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +26,7 @@ public class BookingService {
     private CarRepository carRepository;
     private UserRepository userRepository;
     private EmailService emailService;
+    private CouponRepository couponRepository;
 
     public BookingResponse bookCar(BookingRequest bookingRequest){
         Car car = carRepository.findById(bookingRequest.getCarId())
@@ -52,6 +51,30 @@ public class BookingService {
             if(days <= 0) throw new RuntimeException("End date must be after start date");
 
             double totalPrice = days * car.getRentalPricePerDay();
+
+        Coupon appliedCoupon = null;
+
+        if(bookingRequest.getCouponCode() != null){
+            appliedCoupon = couponRepository.findByCode(bookingRequest.getCouponCode())
+                    .orElseThrow(() -> new RuntimeException("Invalid coupon code"));
+
+            if(appliedCoupon.getExpiryDate().isBefore(LocalDate.now())){
+                throw new RuntimeException("Coupon has expired");
+            }
+
+            if(appliedCoupon.getCurrentUsage() >= appliedCoupon.getMaxUsage()){
+                throw new RuntimeException("Coupon usage limit reached");
+            }
+
+            if(appliedCoupon.isPercentage()){
+                totalPrice -= (totalPrice * appliedCoupon.getDiscount() / 100);
+            } else {
+                totalPrice -= appliedCoupon.getDiscount();
+            }
+
+            appliedCoupon.setCurrentUsage(appliedCoupon.getCurrentUsage() + 1);
+            couponRepository.save(appliedCoupon);
+        }
 
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
