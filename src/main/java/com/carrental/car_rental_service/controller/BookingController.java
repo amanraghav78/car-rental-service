@@ -30,4 +30,11 @@ public class BookingController {
     public ResponseEntity<List<BookingResponse>> getMyBookings(){
         return ResponseEntity.ok(bookingService.getUserBookings());
     }
+
+    @PreAuthorize("hasRole('USER)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long id){
+        bookingService.cancelBooking(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -23,6 +23,9 @@ public class Booking {
     private LocalDate endDate;
     private double totalPrice;
 
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
     @ManyToOne
     private User user;
 

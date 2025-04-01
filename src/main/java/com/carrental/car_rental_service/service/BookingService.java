@@ -4,6 +4,7 @@ import com.carrental.car_rental_service.dto.BookingRequest;
 import com.carrental.car_rental_service.dto.BookingResponse;
 import com.carrental.car_rental_service.entity.Booking;
 import com.carrental.car_rental_service.entity.Car;
+import com.carrental.car_rental_service.entity.PaymentStatus;
 import com.carrental.car_rental_service.entity.User;
 import com.carrental.car_rental_service.repository.BookingRepository;
 import com.carrental.car_rental_service.repository.CarRepository;
@@ -60,6 +61,7 @@ public class BookingService {
                     .startDate(bookingRequest.getStartDate())
                     .endDate(bookingRequest.getEndDate())
                     .totalPrice(totalPrice)
+                    .paymentStatus(PaymentStatus.PENDING)
                     .car(car)
                     .user(user)
                     .build();
@@ -91,6 +93,21 @@ public class BookingService {
                         b.getTotalPrice()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public void cancelBooking(Long bookingId){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if(!booking.getUser().getId().equals(user.getId())){
+            throw new RuntimeException("You are not authorised to cancel the bookibng");
+        }
+
+        bookingRepository.delete(booking);
     }
 
     private boolean datesOverlap(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2){
