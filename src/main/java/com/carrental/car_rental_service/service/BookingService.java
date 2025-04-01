@@ -27,6 +27,7 @@ public class BookingService {
     private BookingRepository bookingRepository;
     private CarRepository carRepository;
     private UserRepository userRepository;
+    private EmailService emailService;
 
     public BookingResponse bookCar(BookingRequest bookingRequest){
         Car car = carRepository.findById(bookingRequest.getCarId())
@@ -67,6 +68,19 @@ public class BookingService {
                     .build();
 
             Booking savedBooking = bookingRepository.save(booking);
+
+            String emailBody = "<h3>Booking Confirmed</h3>"
+                    + "<p>Dear " + user.getName() + ",</p>"
+                    + "<p>Your car rental booking has been confirmed:</p>"
+                    + "<ul>"
+                    + "<li><b>Car:</b> " + car.getModel() + "</li>"
+                    + "<li><b>From:</b> " + bookingRequest.getStartDate() + "</li>"
+                    + "<li><b>To:</b> " + bookingRequest.getEndDate() + "</li>"
+                    + "<li><b>Total Price:</b> $" + totalPrice + "</li>"
+                    + "</ul>"
+                    + "<p>Thank you for choosing our service!</p>";
+
+            emailService.sendEmail(user.getEmail(), "Car Rental Booking confirmation", emailBody);
 
             return new BookingResponse(
                     savedBooking.getId(),

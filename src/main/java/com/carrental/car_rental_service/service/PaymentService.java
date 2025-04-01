@@ -13,6 +13,7 @@ import java.util.Random;
 public class PaymentService {
 
     private final BookingRepository bookingRepository;
+    private final EmailService emailService;
     private final Random random = new Random();
 
     public String processPayment(Long bookingId){
@@ -25,12 +26,30 @@ public class PaymentService {
 
         boolean isSuccessful = random.nextBoolean();
 
+        String emailBody;
         if (isSuccessful){
             booking.setPaymentStatus(PaymentStatus.PAID);
+            emailBody = "<h3>Payment Successful</h3>"
+                    + "<p>Dear " + booking.getUser().getName() + ",</p>"
+                    + "<p>Your payment for the car rental has been successfully processed.</p>"
+                    + "<ul>"
+                    + "<li><b>Car:</b> " + booking.getCar().getModel() + "</li>"
+                    + "<li><b>Booking ID:</b> " + booking.getId() + "</li>"
+                    + "<li><b>Amount Paid:</b> $" + booking.getTotalPrice() + "</li>"
+                    + "</ul>"
+                    + "<p>Enjoy your ride!</p>";
+            emailService.sendEmail(booking.getUser().getEmail(), "Car Rental Payment Succesful", emailBody);
+
             bookingRepository.save(booking);
             return "Payment successful!";
         } else {
             booking.setPaymentStatus(PaymentStatus.FAILED);
+            emailBody = "<h3>Payment Failed</h3>"
+                    + "<p>Dear " + booking.getUser().getName() + ",</p>"
+                    + "<p>Your payment for the car rental failed. Please try again.</p>"
+                    + "<p>Booking ID: " + booking.getId() + "</p>";
+
+            emailService.sendEmail(booking.getUser().getEmail(), "Car Rental Payment Failed", emailBody);
             bookingRepository.save(booking);
             return "Payment failed. Please retry";
         }
