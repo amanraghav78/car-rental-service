@@ -1,9 +1,6 @@
 package com.carrental.car_rental_service.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,5 +21,8 @@ public class Car {
     private String registrationNumber;
     private double rentalPricePerDay;
     private boolean available;
+
+    @Transient
+    private double currentPrice;
 
 }
