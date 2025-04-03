@@ -119,6 +119,7 @@ public class BookingService {
     }
 
     public PriceBreakdownDTO getPriceBreakdown(BookingRequest bookingRequest){
+
         Car car = carRepository.findById(bookingRequest.getCarId())
                 .orElseThrow(() -> new RuntimeException("Car not found"));
 
