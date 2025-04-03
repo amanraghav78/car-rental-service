@@ -2,6 +2,7 @@ package com.carrental.car_rental_service.controller;
 
 import com.carrental.car_rental_service.dto.BookingRequest;
 import com.carrental.car_rental_service.dto.BookingResponse;
+import com.carrental.car_rental_service.dto.PriceBreakdownDTO;
 import com.carrental.car_rental_service.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.print.Book;
 import java.util.List;
 
 @RestController
@@ -36,5 +38,10 @@ public class BookingController {
     public ResponseEntity<Void> cancelBooking(@PathVariable Long id){
         bookingService.cancelBooking(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/price-breakdown")
+    public PriceBreakdownDTO getPriceBrreakdown(@RequestBody BookingRequest bookingRequest){
+        return bookingService.getPriceBreakdown(bookingRequest);
     }
 }

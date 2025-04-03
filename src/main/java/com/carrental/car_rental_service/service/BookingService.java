@@ -2,6 +2,7 @@ package com.carrental.car_rental_service.service;
 
 import com.carrental.car_rental_service.dto.BookingRequest;
 import com.carrental.car_rental_service.dto.BookingResponse;
+import com.carrental.car_rental_service.dto.PriceBreakdownDTO;
 import com.carrental.car_rental_service.entity.*;
 import com.carrental.car_rental_service.repository.BookingRepository;
 import com.carrental.car_rental_service.repository.CarRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.awt.print.Book;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ public class BookingService {
     private UserRepository userRepository;
     private EmailService emailService;
     private CouponRepository couponRepository;
+    private final PricingService pricingService;
 
     public BookingResponse bookCar(BookingRequest bookingRequest){
         Car car = carRepository.findById(bookingRequest.getCarId())
@@ -113,6 +116,44 @@ public class BookingService {
                     savedBooking.getEndDate(),
                     savedBooking.getTotalPrice()
             );
+    }
+
+    public PriceBreakdownDTO getPriceBreakdown(BookingRequest bookingRequest){
+        Car car = carRepository.findById(bookingRequest.getCarId())
+                .orElseThrow(() -> new RuntimeException("Car not found"));
+
+        long rentalDays = ChronoUnit.DAYS.between(bookingRequest.getStartDate(), bookingRequest.getEndDate());
+
+        if(rentalDays < 1) {
+            throw new IllegalArgumentException("Rental days must be atleast 1 day");
+        }
+
+        double basePricePerDay = car.getRentalPricePerDay();
+        double dynamicPricePerDay = pricingService.calculateDynamicPrice(car);
+        double totalBasePrice = basePricePerDay * rentalDays;
+        double totalDynamicPrice = dynamicPricePerDay * rentalDays;
+
+        double discount = applyDiscount(bookingRequest.getCouponCode(), totalDynamicPrice);
+        double tax = totalDynamicPrice * 0.10;
+        double finalPrice = totalBasePrice - discount + tax;
+
+        return new PriceBreakdownDTO(
+                rentalDays,
+                basePricePerDay,
+                dynamicPricePerDay,
+                totalBasePrice,
+                totalDynamicPrice,
+                discount,
+                tax,
+                finalPrice
+        );
+    }
+
+    private double applyDiscount(String couponCode, double amount){
+        if("Welcome10".equalsIgnoreCase(couponCode)){
+            return amount * 0.10;
+        }
+        return 0.0;
     }
 
     public List<BookingResponse> getUserBookings(){
